@@ -3,104 +3,137 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Modo de Estudo - StudyBuddy</title>
+  <meta name="theme-color" content="#FFF7E8">
+  <title>Estudando - StudyBuddy</title>
   <link rel="stylesheet" href="../css/style.css">
-  <style>
-    .study-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    .controls { display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap; }
-    .progress { font-size: 1.2rem; font-weight: bold; color: var(--text-light); }
-  </style>
+  <link rel="stylesheet" href="../css/upgrade.css">
 </head>
-<body>
+<body class="study-page">
   <nav>
-    <a href="../index.html" class="nav-brand">📚 StudyBuddy</a>
+    <a href="../index.html" class="nav-brand"><span class="brand-mark">✦</span> StudyBuddy</a>
     <div class="nav-links">
-      <a href="decks.html" class="btn btn-secondary">Sair do Modo Estudo</a>
+      <a href="decks.html">Sair do estudo</a>
     </div>
   </nav>
 
-  <main>
-    <div class="study-header">
-      <h2 id="deckTitle">Carregando...</h2>
-      <div class="progress" id="progressCount">0 / 0</div>
-    </div>
-
-    <div class="flashcard-container" id="cardContainer">
-      <div class="flashcard" id="flashcard">
-        <div class="flashcard-face flashcard-front" id="cardFront">Frente</div>
-        <div class="flashcard-face flashcard-back" id="cardBack">Verso</div>
+  <main class="study-main">
+    <header class="study-header">
+      <div>
+        <span class="section-kicker">sessão de estudo</span>
+        <h2 id="deckTitle">Carregando...</h2>
       </div>
+      <div class="study-progress-wrap">
+        <span class="progress" id="progressCount">0 / 0</span>
+        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+      </div>
+    </header>
+
+    <section class="study-stage">
+      <button class="study-arrow study-arrow-left" id="btnPrev" aria-label="Card anterior">←</button>
+
+      <div class="flashcard-container" id="cardContainer" tabindex="0" role="button" aria-label="Flashcard. Clique para virar.">
+        <div class="flashcard" id="flashcard">
+          <div class="flashcard-face flashcard-front" id="cardFront">
+            <span class="face-label">frente</span>
+            <div class="card-content"></div>
+            <div class="card-image-wrap" id="frontImage"></div>
+            <span class="flip-hint">clique para virar ✦</span>
+          </div>
+          <div class="flashcard-face flashcard-back" id="cardBack">
+            <span class="face-label">verso</span>
+            <div class="card-content"></div>
+            <div class="card-image-wrap" id="backImage"></div>
+            <span class="flip-hint">clique para voltar ↻</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="study-arrow study-arrow-right" id="btnNext" aria-label="Próximo card">→</button>
+    </section>
+
+    <div class="study-toolbar">
+      <button class="btn btn-secondary" id="btnShuffle">🔀 <span>Embaralhar</span></button>
+      <button class="btn btn-primary" id="btnFlip">Virar <kbd>Espaço</kbd></button>
     </div>
 
-    <div class="controls">
-      <button class="btn" id="btnPrev">⬅ Anterior</button>
-      <button class="btn btn-primary" id="btnFlip">Virar (Espaço)</button>
-      <button class="btn" id="btnNext">Próximo ➡</button>
-      <button class="btn btn-secondary" id="btnShuffle">Embaralhar 🔀</button>
-    </div>
+    <p class="keyboard-hint">← → para navegar &nbsp; • &nbsp; Espaço para virar</p>
   </main>
 
   <script src="../js/storage/storage.js"></script>
   <script src="../js/ui/toast.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const deckId = urlParams.get('id');
+      const deckId = new URLSearchParams(window.location.search).get('id');
       const deck = StorageAPI.getDeck(deckId);
 
-      if (!deck || deck.cards.length === 0) {
+      if (!deck || !deck.cards?.length) {
         Toast.show('Baralho não encontrado ou vazio.', 'error');
-        setTimeout(() => window.location.href = 'decks.html', 1500);
+        setTimeout(() => window.location.href = 'decks.html', 900);
         return;
       }
 
       let cards = [...deck.cards];
       let currentIndex = 0;
       let isFlipped = false;
+      let busy = false;
 
-      const elTitle = document.getElementById('deckTitle');
-      const elProgress = document.getElementById('progressCount');
-      const elFlashcard = document.getElementById('flashcard');
-      const elFront = document.getElementById('cardFront');
-      const elBack = document.getElementById('cardBack');
-      
-      elTitle.textContent = deck.name;
+      const flashcard = document.getElementById('flashcard');
+      const container = document.getElementById('cardContainer');
+      const front = document.querySelector('#cardFront .card-content');
+      const back = document.querySelector('#cardBack .card-content');
+      const frontImage = document.getElementById('frontImage');
+      const backImage = document.getElementById('backImage');
+      const progress = document.getElementById('progressCount');
+      const progressBar = document.getElementById('progressBar');
+      document.getElementById('deckTitle').textContent = deck.name;
 
-      function updateCard() {
-        isFlipped = false;
-        elFlashcard.classList.remove('flipped');
-        
-        // Timeout para esperar a animação de desvirar antes de trocar o texto
-        setTimeout(() => {
-          elFront.textContent = cards[currentIndex].front;
-          elBack.textContent = cards[currentIndex].back;
-          elProgress.textContent = `${currentIndex + 1} / ${cards.length}`;
-        }, 150);
+      function renderImage(target, src) {
+        target.innerHTML = '';
+        if (!src) return;
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = 'Imagem anexada ao flashcard';
+        target.appendChild(img);
+      }
+
+      function renderCard() {
+        const card = cards[currentIndex];
+        front.textContent = card.front;
+        back.textContent = card.back;
+        renderImage(frontImage, card.image);
+        renderImage(backImage, card.image);
+        progress.textContent = `${currentIndex + 1} / ${cards.length}`;
+        progressBar.style.width = `${((currentIndex + 1) / cards.length) * 100}%`;
       }
 
       function flipCard() {
+        if (busy) return;
         isFlipped = !isFlipped;
-        if(isFlipped) {
-          elFlashcard.classList.add('flipped');
-        } else {
-          elFlashcard.classList.remove('flipped');
-        }
+        flashcard.classList.toggle('flipped', isFlipped);
       }
 
-      function nextCard() {
-        if (currentIndex < cards.length - 1) {
-          currentIndex++;
-          updateCard();
-        } else {
-          Toast.show('Você chegou ao fim do baralho! 🎉');
+      function changeCard(direction) {
+        if (busy) return;
+        const nextIndex = currentIndex + direction;
+        if (nextIndex < 0 || nextIndex >= cards.length) {
+          Toast.show(direction > 0 ? 'Você chegou ao fim do baralho! 🎉' : 'Este é o primeiro card. 🌱');
+          return;
         }
-      }
 
-      function prevCard() {
-        if (currentIndex > 0) {
-          currentIndex--;
-          updateCard();
-        }
+        busy = true;
+        const exitClass = direction > 0 ? 'slide-out-left' : 'slide-out-right';
+        const enterClass = direction > 0 ? 'slide-in-right' : 'slide-in-left';
+        flashcard.classList.add(exitClass);
+
+        setTimeout(() => {
+          currentIndex = nextIndex;
+          isFlipped = false;
+          flashcard.classList.remove('flipped', exitClass);
+          renderCard();
+          flashcard.classList.add(enterClass);
+          requestAnimationFrame(() => requestAnimationFrame(() => flashcard.classList.remove(enterClass)));
+          setTimeout(() => { busy = false; }, 360);
+        }, 180);
       }
 
       function shuffle() {
@@ -109,31 +142,26 @@
           [cards[i], cards[j]] = [cards[j], cards[i]];
         }
         currentIndex = 0;
-        updateCard();
+        isFlipped = false;
+        flashcard.classList.remove('flipped');
+        renderCard();
         Toast.show('Baralho embaralhado! 🔀');
       }
 
-      // Event Listeners
-      document.getElementById('cardContainer').addEventListener('click', flipCard);
+      container.addEventListener('click', flipCard);
       document.getElementById('btnFlip').addEventListener('click', flipCard);
-      document.getElementById('btnNext').addEventListener('click', nextCard);
-      document.getElementById('btnPrev').addEventListener('click', prevCard);
+      document.getElementById('btnNext').addEventListener('click', () => changeCard(1));
+      document.getElementById('btnPrev').addEventListener('click', () => changeCard(-1));
       document.getElementById('btnShuffle').addEventListener('click', shuffle);
 
-      // Keyboard Shortcuts
-      document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space') {
-          e.preventDefault();
-          flipCard();
-        } else if (e.code === 'ArrowRight') {
-          nextCard();
-        } else if (e.code === 'ArrowLeft') {
-          prevCard();
-        }
+      document.addEventListener('keydown', (event) => {
+        if (event.target.matches('input, textarea, button, a')) return;
+        if (event.code === 'Space') { event.preventDefault(); flipCard(); }
+        if (event.key === 'ArrowRight') changeCard(1);
+        if (event.key === 'ArrowLeft') changeCard(-1);
       });
 
-      // Init
-      updateCard();
+      renderCard();
     });
   </script>
 </body>

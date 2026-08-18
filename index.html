@@ -3,33 +3,92 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StudyBuddy - Home</title>
+  <meta name="theme-color" content="#FFF7E8">
+  <title>StudyBuddy — Seu cantinho de estudos</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-  <nav>
-    <a href="index.html" class="nav-brand">📚 StudyBuddy</a>
+<body class="home-page">
+  <nav class="site-nav">
+    <a href="index.html" class="nav-brand" aria-label="StudyBuddy — início">
+      <span class="brand-mark" aria-hidden="true">✦</span>
+      <span>StudyBuddy</span>
+    </a>
+
     <div class="nav-links">
-      <a href="index.html">Início</a>
+      <a href="index.html" class="is-active">Início</a>
       <a href="pages/decks.html">Meus Baralhos</a>
-      <a href="pages/create.html" class="btn btn-primary" style="margin-left: 1rem;">Criar</a>
+      <a href="pages/create.html" class="btn btn-primary nav-create">Criar <span aria-hidden="true">✦</span></a>
     </div>
   </nav>
 
-  <main>
-    <div class="text-center mb-2">
-      <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Bem-vindo ao StudyBuddy! ✨</h1>
-      <p style="color: var(--text-light); font-size: 1.1rem;">Um cantinho aconchegante para memorizar tudo o que você precisa.</p>
-    </div>
+  <main class="home-main">
+    <div class="ambient-shape ambient-shape-one" aria-hidden="true"></div>
+    <div class="ambient-shape ambient-shape-two" aria-hidden="true"></div>
+    <span class="doodle doodle-star doodle-one" aria-hidden="true">✦</span>
+    <span class="doodle doodle-star doodle-two" aria-hidden="true">✧</span>
+    <span class="doodle doodle-sparkle doodle-three" aria-hidden="true">· ｡ ·</span>
 
-    <div style="display: flex; gap: 1rem; justify-content: center; margin: 2rem 0;">
-      <a href="pages/create.html" class="btn btn-primary">Criar novo baralho ➕</a>
-      <a href="pages/decks.html" class="btn btn-secondary">Ver minha biblioteca 📚</a>
-    </div>
+    <section class="hero-card" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow"><span>☕</span> seu cantinho de estudos</div>
+        <h1 id="hero-title">Hora de estudar,<br><span>sem pressa.</span> ✨</h1>
+        <p>Transforme suas anotações em pequenos momentos de aprendizado. Pegue seu café, escolha um baralho e bora.</p>
 
-    <h2 style="margin-top: 3rem;">Baralhos Recentes</h2>
-    <div id="recent-decks"></div>
+        <div class="hero-actions">
+          <a href="pages/create.html" class="btn btn-primary btn-large">
+            Criar meu baralho <span class="btn-sparkle" aria-hidden="true">✦</span>
+          </a>
+          <a href="pages/decks.html" class="btn btn-secondary btn-large">Ver biblioteca <span aria-hidden="true">→</span></a>
+        </div>
+
+        <div class="hero-note">
+          <span class="note-check" aria-hidden="true">✓</span>
+          <span>Um card de cada vez. Você consegue.</span>
+        </div>
+      </div>
+
+      <div class="study-scene" aria-hidden="true">
+        <div class="window">
+          <div class="window-sky"></div>
+          <div class="window-moon">☾</div>
+          <span class="rain rain-one"></span>
+          <span class="rain rain-two"></span>
+          <span class="rain rain-three"></span>
+          <span class="rain rain-four"></span>
+        </div>
+        <div class="plant">
+          <span class="leaf leaf-a"></span>
+          <span class="leaf leaf-b"></span>
+          <span class="leaf leaf-c"></span>
+          <span class="pot"></span>
+        </div>
+        <div class="desk-cup">☕</div>
+        <div class="tiny-book book-one"></div>
+        <div class="tiny-book book-two"></div>
+        <div class="scene-cat">
+          <span class="cat-ear cat-ear-left"></span>
+          <span class="cat-ear cat-ear-right"></span>
+          <span class="cat-face">•ᴗ•</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="recent-section" aria-labelledby="recent-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">sua estante</span>
+          <h2 id="recent-title">Baralhos recentes <span aria-hidden="true">📚</span></h2>
+        </div>
+        <a href="pages/decks.html" class="text-link">Ver todos →</a>
+      </div>
+
+      <div id="recent-decks"></div>
+    </section>
   </main>
+
+  <footer class="home-footer">
+    Feito para estudar no seu ritmo <span aria-hidden="true">♡</span>
+  </footer>
 
   <script src="js/storage/storage.js"></script>
   <script src="js/app.js"></script>

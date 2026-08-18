@@ -5,15 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Criar Baralho - StudyBuddy</title>
   <link rel="stylesheet" href="../css/style.css">
-  <style>
-    .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
-    .preview-card { background: var(--card-bg); padding: 1rem; border: var(--border-cartoon); border-radius: var(--border-radius-sm); font-size: 0.9rem; }
-    .error-msg { color: var(--danger-color); font-size: 0.9rem; font-weight: bold; margin-top: 0.5rem; }
-  </style>
+  <link rel="stylesheet" href="../css/upgrade.css">
 </head>
 <body>
   <nav>
-    <a href="../index.html" class="nav-brand">📚 StudyBuddy</a>
+    <a href="../index.html" class="nav-brand"><span class="brand-mark">✦</span> StudyBuddy</a>
     <div class="nav-links">
       <a href="../index.html">Início</a>
       <a href="decks.html">Meus Baralhos</a>
@@ -22,28 +18,48 @@
 
   <main>
     <h1>Vamos criar um baralho ✨</h1>
-    <p class="mb-2">Cole suas anotações e nós transformamos em flashcards!</p>
+    <p>Monte suas perguntas, coloque imagens quando quiser e deixe o StudyBuddy cuidar do resto.</p>
 
-    <div class="input-group">
-      <label for="deckName">Nome do Baralho</label>
-      <input type="text" id="deckName" placeholder="Ex: Matemática, Inglês...">
+    <div class="create-layout">
+      <section class="create-panel">
+        <div class="input-group">
+          <label for="deckName">Nome do Baralho</label>
+          <input type="text" id="deckName" placeholder="Ex: Biologia, Inglês, História...">
+        </div>
+
+        <div class="input-group">
+          <label for="separator">Separador — Modo Inteligente</label>
+          <input type="text" id="separator" value="|" placeholder="Ex: | ou ->">
+        </div>
+
+        <div class="input-group">
+          <label for="deckContent">Conteúdo</label>
+          <textarea id="deckContent" rows="10" placeholder="Quanto é 1 + 1? | 2
+Qual é a capital do Brasil? | Brasília"></textarea>
+        </div>
+
+        <button id="btnCreate" class="btn btn-primary" style="width:100%;font-size:1.08rem;padding:1rem;">
+          Criar baralho <span>✦</span>
+        </button>
+
+        <p class="attachment-hint" style="margin-top:12px;text-align:center;">
+          💡 Depois de gerar os cards, você pode anexar uma imagem em qualquer um deles.
+        </p>
+      </section>
+
+      <section class="preview-panel" aria-labelledby="previewTitle">
+        <div class="preview-panel-header">
+          <div>
+            <span class="section-kicker">olha como vai ficar</span>
+            <h3 id="previewTitle">Pré-visualização</h3>
+          </div>
+          <span class="preview-count"><span id="countPreview">0</span></span>
+        </div>
+
+        <div id="errorsContainer"></div>
+        <div id="previewContainer" class="preview-grid"></div>
+      </section>
     </div>
-
-    <div class="input-group">
-      <label for="separator">Separador (Modo Inteligente)</label>
-      <input type="text" id="separator" value="|" placeholder="Ex: | ou ->">
-    </div>
-
-    <div class="input-group">
-      <label for="deckContent">Conteúdo</label>
-      <textarea id="deckContent" rows="8" placeholder="Ex: Quanto é 1+1? | 2"></textarea>
-    </div>
-
-    <button id="btnCreate" class="btn btn-primary" style="width: 100%; font-size: 1.2rem; padding: 1rem;">Criar baralho ✨</button>
-
-    <h3 style="margin-top: 2rem;">Pré-visualização (<span id="countPreview">0</span> cards)</h3>
-    <div id="errorsContainer"></div>
-    <div id="previewContainer" class="preview-grid"></div>
   </main>
 
   <script src="../js/storage/storage.js"></script>
@@ -59,37 +75,91 @@
     const btnCreate = document.getElementById('btnCreate');
 
     let currentValidCards = [];
+    const attachments = new Map();
+
+    function fileToDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
 
     function updatePreview() {
-      const text = deckContentInput.value;
-      const separator = separatorInput.value;
-      
-      const { valid, invalid } = Parser.parseCards(text, separator);
+      const { valid, invalid } = Parser.parseCards(deckContentInput.value, separatorInput.value);
       currentValidCards = valid;
-
-      // Update count
       countPreview.textContent = valid.length;
-
-      // Render valid cards (Escape HTML carefully using textContent)
       previewContainer.innerHTML = '';
-      valid.forEach(card => {
-        const cardDiv = document.createElement('div');
+
+      valid.forEach((card, index) => {
+        const cardDiv = document.createElement('article');
         cardDiv.className = 'preview-card';
-        
+        cardDiv.style.animationDelay = `${Math.min(index * 45, 450)}ms`;
+
         const frontDiv = document.createElement('div');
-        frontDiv.innerHTML = '<strong>F:</strong> ';
+        const frontLabel = document.createElement('span');
+        frontLabel.className = 'preview-label';
+        frontLabel.textContent = 'Frente';
+        frontDiv.appendChild(frontLabel);
         frontDiv.appendChild(document.createTextNode(card.front));
-        
+
         const backDiv = document.createElement('div');
-        backDiv.innerHTML = '<strong>V:</strong> ';
+        backDiv.style.marginTop = '12px';
+        const backLabel = document.createElement('span');
+        backLabel.className = 'preview-label';
+        backLabel.textContent = 'Verso';
+        backDiv.appendChild(backLabel);
         backDiv.appendChild(document.createTextNode(card.back));
-        
-        cardDiv.appendChild(frontDiv);
-        cardDiv.appendChild(backDiv);
+
+        const side = document.createElement('div');
+        side.className = 'preview-side';
+
+        const label = document.createElement('span');
+        label.className = 'attachment-hint';
+        label.textContent = '🖼️ Anexo opcional — imagem deste card';
+        side.appendChild(label);
+
+        const imageBox = document.createElement('div');
+        imageBox.className = 'preview-image-box';
+
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/png,image/jpeg,image/webp,image/gif';
+        fileInput.setAttribute('aria-label', `Anexar imagem ao card ${index + 1}`);
+
+        if (attachments.has(card.id)) {
+          const saved = attachments.get(card.id);
+          const thumb = document.createElement('img');
+          thumb.className = 'preview-thumb';
+          thumb.src = saved;
+          thumb.alt = 'Prévia da imagem anexada';
+          imageBox.appendChild(thumb);
+        }
+
+        fileInput.addEventListener('change', async () => {
+          const file = fileInput.files?.[0];
+          if (!file) return;
+          if (file.size > 3 * 1024 * 1024) {
+            Toast.show('Essa imagem passa de 3 MB. Escolha uma menor.', 'error');
+            fileInput.value = '';
+            return;
+          }
+          try {
+            const dataUrl = await fileToDataURL(file);
+            attachments.set(card.id, dataUrl);
+            updatePreview();
+          } catch {
+            Toast.show('Não consegui carregar essa imagem.', 'error');
+          }
+        });
+
+        imageBox.appendChild(fileInput);
+        side.appendChild(imageBox);
+        cardDiv.append(frontDiv, backDiv, side);
         previewContainer.appendChild(cardDiv);
       });
 
-      // Render errors
       errorsContainer.innerHTML = '';
       invalid.forEach(err => {
         const errDiv = document.createElement('div');
@@ -107,13 +177,19 @@
       if (!name) return Toast.show('Dê um nome ao seu baralho!', 'error');
       if (currentValidCards.length === 0) return Toast.show('Adicione pelo menos um card válido.', 'error');
 
-      const newDeck = StorageAPI.saveDeck({ name, cards: currentValidCards });
+      const cardsWithImages = currentValidCards.map(card => ({
+        ...card,
+        image: attachments.get(card.id) || null
+      }));
+
+      const newDeck = StorageAPI.saveDeck({ name, cards: cardsWithImages });
       Toast.show('Baralho criado! ✨');
-      
       setTimeout(() => {
         window.location.href = `study.html?id=${newDeck.id}`;
-      }, 1000);
+      }, 700);
     });
+
+    updatePreview();
   </script>
 </body>
 </html>

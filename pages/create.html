@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar Baralho - StudyBuddy</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .preview-card { background: var(--card-bg); padding: 1rem; border: var(--border-cartoon); border-radius: var(--border-radius-sm); font-size: 0.9rem; }
+    .error-msg { color: var(--danger-color); font-size: 0.9rem; font-weight: bold; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="../index.html" class="nav-brand">📚 StudyBuddy</a>
+    <div class="nav-links">
+      <a href="../index.html">Início</a>
+      <a href="decks.html">Meus Baralhos</a>
+    </div>
+  </nav>
+
+  <main>
+    <h1>Vamos criar um baralho ✨</h1>
+    <p class="mb-2">Cole suas anotações e nós transformamos em flashcards!</p>
+
+    <div class="input-group">
+      <label for="deckName">Nome do Baralho</label>
+      <input type="text" id="deckName" placeholder="Ex: Matemática, Inglês...">
+    </div>
+
+    <div class="input-group">
+      <label for="separator">Separador (Modo Inteligente)</label>
+      <input type="text" id="separator" value="|" placeholder="Ex: | ou ->">
+    </div>
+
+    <div class="input-group">
+      <label for="deckContent">Conteúdo</label>
+      <textarea id="deckContent" rows="8" placeholder="Ex: Quanto é 1+1? | 2"></textarea>
+    </div>
+
+    <button id="btnCreate" class="btn btn-primary" style="width: 100%; font-size: 1.2rem; padding: 1rem;">Criar baralho ✨</button>
+
+    <h3 style="margin-top: 2rem;">Pré-visualização (<span id="countPreview">0</span> cards)</h3>
+    <div id="errorsContainer"></div>
+    <div id="previewContainer" class="preview-grid"></div>
+  </main>
+
+  <script src="../js/storage/storage.js"></script>
+  <script src="../js/ui/toast.js"></script>
+  <script src="../js/flashcards/parser.js"></script>
+  <script>
+    const deckNameInput = document.getElementById('deckName');
+    const separatorInput = document.getElementById('separator');
+    const deckContentInput = document.getElementById('deckContent');
+    const previewContainer = document.getElementById('previewContainer');
+    const countPreview = document.getElementById('countPreview');
+    const errorsContainer = document.getElementById('errorsContainer');
+    const btnCreate = document.getElementById('btnCreate');
+
+    let currentValidCards = [];
+
+    function updatePreview() {
+      const text = deckContentInput.value;
+      const separator = separatorInput.value;
+      
+      const { valid, invalid } = Parser.parseCards(text, separator);
+      currentValidCards = valid;
+
+      // Update count
+      countPreview.textContent = valid.length;
+
+      // Render valid cards (Escape HTML carefully using textContent)
+      previewContainer.innerHTML = '';
+      valid.forEach(card => {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'preview-card';
+        
+        const frontDiv = document.createElement('div');
+        frontDiv.innerHTML = '<strong>F:</strong> ';
+        frontDiv.appendChild(document.createTextNode(card.front));
+        
+        const backDiv = document.createElement('div');
+        backDiv.innerHTML = '<strong>V:</strong> ';
+        backDiv.appendChild(document.createTextNode(card.back));
+        
+        cardDiv.appendChild(frontDiv);
+        cardDiv.appendChild(backDiv);
+        previewContainer.appendChild(cardDiv);
+      });
+
+      // Render errors
+      errorsContainer.innerHTML = '';
+      invalid.forEach(err => {
+        const errDiv = document.createElement('div');
+        errDiv.className = 'error-msg';
+        errDiv.textContent = `Linha ${err.line} ignorada: ${err.reason}`;
+        errorsContainer.appendChild(errDiv);
+      });
+    }
+
+    separatorInput.addEventListener('input', updatePreview);
+    deckContentInput.addEventListener('input', updatePreview);
+
+    btnCreate.addEventListener('click', () => {
+      const name = deckNameInput.value.trim();
+      if (!name) return Toast.show('Dê um nome ao seu baralho!', 'error');
+      if (currentValidCards.length === 0) return Toast.show('Adicione pelo menos um card válido.', 'error');
+
+      const newDeck = StorageAPI.saveDeck({ name, cards: currentValidCards });
+      Toast.show('Baralho criado! ✨');
+      
+      setTimeout(() => {
+        window.location.href = `study.html?id=${newDeck.id}`;
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modo de Estudo - StudyBuddy</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .study-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .controls { display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap; }
+    .progress { font-size: 1.2rem; font-weight: bold; color: var(--text-light); }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="../index.html" class="nav-brand">📚 StudyBuddy</a>
+    <div class="nav-links">
+      <a href="decks.html" class="btn btn-secondary">Sair do Modo Estudo</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="study-header">
+      <h2 id="deckTitle">Carregando...</h2>
+      <div class="progress" id="progressCount">0 / 0</div>
+    </div>
+
+    <div class="flashcard-container" id="cardContainer">
+      <div class="flashcard" id="flashcard">
+        <div class="flashcard-face flashcard-front" id="cardFront">Frente</div>
+        <div class="flashcard-face flashcard-back" id="cardBack">Verso</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="btnPrev">⬅ Anterior</button>
+      <button class="btn btn-primary" id="btnFlip">Virar (Espaço)</button>
+      <button class="btn" id="btnNext">Próximo ➡</button>
+      <button class="btn btn-secondary" id="btnShuffle">Embaralhar 🔀</button>
+    </div>
+  </main>
+
+  <script src="../js/storage/storage.js"></script>
+  <script src="../js/ui/toast.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const deckId = urlParams.get('id');
+      const deck = StorageAPI.getDeck(deckId);
+
+      if (!deck || deck.cards.length === 0) {
+        Toast.show('Baralho não encontrado ou vazio.', 'error');
+        setTimeout(() => window.location.href = 'decks.html', 1500);
+        return;
+      }
+
+      let cards = [...deck.cards];
+      let currentIndex = 0;
+      let isFlipped = false;
+
+      const elTitle = document.getElementById('deckTitle');
+      const elProgress = document.getElementById('progressCount');
+      const elFlashcard = document.getElementById('flashcard');
+      const elFront = document.getElementById('cardFront');
+      const elBack = document.getElementById('cardBack');
+      
+      elTitle.textContent = deck.name;
+
+      function updateCard() {
+        isFlipped = false;
+        elFlashcard.classList.remove('flipped');
+        
+        // Timeout para esperar a animação de desvirar antes de trocar o texto
+        setTimeout(() => {
+          elFront.textContent = cards[currentIndex].front;
+          elBack.textContent = cards[currentIndex].back;
+          elProgress.textContent = `${currentIndex + 1} / ${cards.length}`;
+        }, 150);
+      }
+
+      function flipCard() {
+        isFlipped = !isFlipped;
+        if(isFlipped) {
+          elFlashcard.classList.add('flipped');
+        } else {
+          elFlashcard.classList.remove('flipped');
+        }
+      }
+
+      function nextCard() {
+        if (currentIndex < cards.length - 1) {
+          currentIndex++;
+          updateCard();
+        } else {
+          Toast.show('Você chegou ao fim do baralho! 🎉');
+        }
+      }
+
+      function prevCard() {
+        if (currentIndex > 0) {
+          currentIndex--;
+          updateCard();
+        }
+      }
+
+      function shuffle() {
+        for (let i = cards.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [cards[i], cards[j]] = [cards[j], cards[i]];
+        }
+        currentIndex = 0;
+        updateCard();
+        Toast.show('Baralho embaralhado! 🔀');
+      }
+
+      // Event Listeners
+      document.getElementById('cardContainer').addEventListener('click', flipCard);
+      document.getElementById('btnFlip').addEventListener('click', flipCard);
+      document.getElementById('btnNext').addEventListener('click', nextCard);
+      document.getElementById('btnPrev').addEventListener('click', prevCard);
+      document.getElementById('btnShuffle').addEventListener('click', shuffle);
+
+      // Keyboard Shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          flipCard();
+        } else if (e.code === 'ArrowRight') {
+          nextCard();
+        } else if (e.code === 'ArrowLeft') {
+          prevCard();
+        }
+      });
+
+      // Init
+      updateCard();
+    });
+  </script>
+</body>
+</html>

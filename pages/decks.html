@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meus Baralhos - StudyBuddy</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav>
+    <a href="../index.html" class="nav-brand">📚 StudyBuddy</a>
+    <div class="nav-links">
+      <a href="../index.html">Início</a>
+      <a href="create.html" class="btn btn-primary" style="margin-left: 1rem;">Criar</a>
+    </div>
+  </nav>
+
+  <main>
+    <h1>Minha Biblioteca 📚</h1>
+    <div id="all-decks"></div>
+  </main>
+
+  <script src="../js/storage/storage.js"></script>
+  <script src="../js/ui/toast.js"></script>
+  <script>
+    function renderDecks() {
+      const container = document.getElementById('all-decks');
+      const decks = StorageAPI.getAllDecks();
+
+      if (decks.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>Seu cantinho de estudos está vazio por enquanto ☕</h3>
+            <p class="mt-2 mb-2">Que tal criarmos algo novo?</p>
+            <a href="create.html" class="btn btn-primary">Criar meu primeiro baralho</a>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '<div class="deck-grid">';
+      decks.reverse().forEach(deck => {
+        const date = new Date(deck.createdAt).toLocaleDateString('pt-BR');
+        html += `
+          <div class="deck-card">
+            <h3>${deck.name}</h3>
+            <p style="color: var(--text-light)">Criado em: ${date}</p>
+            <p><strong>${deck.cards.length}</strong> cards</p>
+            <div class="deck-card-actions">
+              <a href="study.html?id=${deck.id}" class="btn btn-primary" style="flex: 1; text-align: center;">Estudar</a>
+              <button class="btn btn-danger" onclick="deleteDeck('${deck.id}')">Excluir</button>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    window.deleteDeck = (id) => {
+      if (confirm('Tem certeza que deseja excluir este baralho? Essa ação não pode ser desfeita.')) {
+        StorageAPI.deleteDeck(id);
+        Toast.show('Baralho excluído.');
+        renderDecks();
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', renderDecks);
+  </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+@import url('variables.css');
+@import url('components.css');
+@import url('animations.css');
+
+/* Resets Acessíveis */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:focus-visible {
+  outline: 3px dashed var(--lavender);
+  outline-offset: 4px;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--cream);
+  color: var(--brown);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  
+  /* Padrão de mesa/caderno (pontilhados sutis) */
+  background-image: radial-gradient(rgba(102, 87, 101, 0.1) 2px, transparent 2px);
+  background-size: 32px 32px;
+}
+
+/* Scrollbar personalizada e discreta */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--cream);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--lavender);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--cream);
+}
+
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  /* Animação suave de entrada ao carregar a página */
+  animation: fadeInSoft 0.6s ease-out;
+}
+
+/* Tipografia Base */
+h1, h2, h3, h4 {
+  font-weight: 800;
+  color: var(--brown);
+  line-height: 1.2;
+}
+
+h1 { font-size: 2.2rem; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.25rem; }
+
+p {
+  color: var(--brown-soft);
+  font-weight: 600;
+}
+
+/* Utilitários mantidos do HTML original */
+.text-center { text-align: center; }
+.mt-2 { margin-top: 1rem; }
+.mb-2 { margin-bottom: 1rem; }
+
+/* Decorações via CSS (sem alterar HTML) */
+h1::after {
+  content: " ✧";
+  color: var(--yellow);
+  font-size: 0.8em;
+  opacity: 0.8;
+}
